@@ -55,14 +55,7 @@ public class ProductoControlador {
             String nombreImagen = upload.saveImage(file);
             producto.setImagen(nombreImagen);
         }else { // cuando se edita un producto
-            if (file.isEmpty()) { // editando sin cambiar la imagen
-                Producto p = new Producto();
-                p = productoService.getProducto(producto.getId()).get();
-                producto.setImagen(p.getImagen());
-            }else { // editando y cambiando la imagen
-                String nombreImagen = upload.saveImage(file);
-                producto.setImagen(nombreImagen);
-            }
+
         }
 
         productoService.save(producto);
@@ -82,9 +75,45 @@ public class ProductoControlador {
     }
 
     @PostMapping("/update")
-    public String update(Producto producto) {
+    public String update(Producto producto, @RequestParam("img") MultipartFile file) throws IOException {
+
+        Producto p = new Producto();
+        p = productoService.getProducto(producto.getId()).get();
+
+
+        if (file.isEmpty()) { // editando sin cambiar la imagen
+
+            producto.setImagen(p.getImagen());
+        }else { // cuando se edita tambien la imagen
+
+            //eliminar imagen cuando no sea la imagen por defecto
+            if (!p.getImagen().equals("default.jpg")) {
+                upload.deleteImage(p.getImagen());
+            }
+
+
+            String nombreImagen = upload.saveImage(file);
+            producto.setImagen(nombreImagen);
+        }
         logger.info("Actualizando producto: {}", producto);
+        producto.setUsuario(p.getUsuario());
         productoService.update(producto);
+        return "redirect:/productos";
+    }
+
+    @GetMapping("/delete/{id}")
+    public String delete(@PathVariable("id") Integer id) throws IOException {
+
+        Producto p = new Producto();
+        p = productoService.getProducto(id).get();
+
+        //eliminar imagen cuando no sea la imagen por defecto
+        if (!p.getImagen().equals("default.jpg")) {
+            upload.deleteImage(p.getImagen());
+        }
+
+
+        productoService.delete(id);
         return "redirect:/productos";
     }
 
