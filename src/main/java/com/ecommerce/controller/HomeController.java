@@ -1,5 +1,6 @@
 package com.ecommerce.controller;
 
+import com.ecommerce.model.Producto;
 import com.ecommerce.service.ProductoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.slf4j.*;
+
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/")
@@ -28,8 +31,15 @@ public class HomeController {
     }
 
     @GetMapping("/productohome/{id}")
-    public String productos(@PathVariable Integer id) {
+    public String productos(@PathVariable Integer id, Model model) {
        logger.info("Id del Producto enviado como parámetro: {}", id);
+
+        Producto producto = new Producto();
+        Optional<Producto> optionalProducto = productoService.getProducto(id);
+        producto = (Producto) optionalProducto.get();
+
+        model.addAttribute("producto", producto);
+
         return "administrador/usuario/productohome";
     }
 }
