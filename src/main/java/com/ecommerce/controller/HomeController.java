@@ -128,4 +128,10 @@ public class HomeController {
         model.addAttribute("orden", orden);
         return "administrador/usuario/carrito";
     }
+
+    @GetMapping("/order")
+    public String order() {;
+        return "administrador/usuario/resumenorden";
+    }
+
 }
