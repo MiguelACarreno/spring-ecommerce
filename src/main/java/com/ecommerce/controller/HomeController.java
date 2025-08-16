@@ -21,7 +21,7 @@ import java.util.Optional;
 public class HomeController {
 
 
-    private final Logger logger = LoggerFactory.getLogger(ProductoControlador.class);
+    private final Logger logger = LoggerFactory.getLogger(HomeController.class);
 
     @Autowired
     private ProductoService productoService;
@@ -39,7 +39,7 @@ public class HomeController {
         return "administrador/usuario/home";
     }
 
-    @GetMapping("/productohome/{id}")
+    @GetMapping("/producto/{id}")
     public String productos(@PathVariable Integer id, Model model) {
        logger.info("Id del Producto enviado como parámetro: {}", id);
 
@@ -53,16 +53,79 @@ public class HomeController {
     }
 
     @PostMapping("/cart")
-    public String addCart(@RequestParam Integer id, @RequestParam Integer cantidad) {
+    public String addCart(@RequestParam Integer id, @RequestParam Integer cantidad, Model model) {
 
         DetalleOrden detalleOrden = new DetalleOrden();
         Producto producto = new Producto();
-        double sumatoria = 0;
+        double sumaTotal = 0;
 
 
         Optional<Producto> optionalProducto = productoService.getProducto(id);
         logger.info("Produto añadido: {}", id);
         logger.info("Cantidad: {}", cantidad);
+
+        producto = (Producto) optionalProducto.get();
+
+        detalleOrden.setCantidad(String.valueOf(cantidad));
+        detalleOrden.setPrecio(String.valueOf(producto.getPrecio()));
+        detalleOrden.setNombre(producto.getNombre());
+        detalleOrden.setTotal(producto.getPrecio() * cantidad);
+        detalleOrden.setProducto(producto);
+
+        //v validar que el producto no se repita
+        Integer idProducto = producto.getId();
+       boolean ingresado = detalles.stream().anyMatch(p -> p.getProducto().getId() == idProducto);
+
+        if (!ingresado) {
+            detalles.add(detalleOrden);
+        }
+
+
+        sumaTotal = detalles.stream().mapToDouble(DetalleOrden::getTotal).sum();
+        orden.setTotal(sumaTotal);
+
+        model.addAttribute("cart", detalles);
+        model.addAttribute("orden", orden);
+
+        return "administrador/usuario/carrito";
+    }
+
+
+
+
+
+    //Quitar producto del carrito
+    @GetMapping("delete/cart/{id}")
+    public String deleteProductoCart(@PathVariable Integer id, Model model) {
+
+        //lista nueva de productos
+        List<DetalleOrden> ordenesNueva = new ArrayList<>();
+
+        //recorremos la lista de productos
+        for (DetalleOrden detalleOrden : detalles) {
+            //Si el id del producto es diferente al id que se pasa por la url, lo agregamos a la nueva lista
+            if (detalleOrden.getProducto().getId() != id) {
+                ordenesNueva.add(detalleOrden);
+            }
+        }
+
+        //Ponemos la nueva lista en la lista de productos
+        detalles = ordenesNueva;
+
+        double sumaTotal = detalles.stream().mapToDouble(DetalleOrden::getTotal).sum();
+        orden.setTotal(sumaTotal);
+
+        model.addAttribute("cart", detalles);
+        model.addAttribute("orden", orden);
+
+        return "administrador/usuario/carrito";
+    }
+
+
+    @GetMapping("/getCart")
+    public String getCart(Model model) {
+        model.addAttribute("cart", detalles);
+        model.addAttribute("orden", orden);
         return "administrador/usuario/carrito";
     }
 }
